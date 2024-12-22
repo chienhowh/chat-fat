@@ -1,5 +1,7 @@
-import * as line from "@line/bot-sdk";
-import express from "express";
+const line = require("@line/bot-sdk");
+const express = require("express");
+const axios = require("axios");
+require("dotenv").config();
 
 // create LINE SDK config from env variables
 const config = {
@@ -17,7 +19,13 @@ const app = express();
 
 // register a webhook handler with middleware
 // about the middleware, please refer to doc
-app.post("/callback", line.middleware(config), (req, res) => {
+app.get("/", (req, res) => {
+  console.log("work");
+  res.send("Hello World!");
+});
+
+app.post("/lineWebhook", line.middleware(config), (req, res) => {
+  console.log("req::", req.body);
   Promise.all(req.body.events.map(handleEvent))
     .then((result) => res.json(result))
     .catch((err) => {
@@ -27,24 +35,53 @@ app.post("/callback", line.middleware(config), (req, res) => {
 });
 
 // event handler
-function handleEvent(event) {
+async function handleEvent(event) {
   if (event.type !== "message" || event.message.type !== "text") {
     // ignore non-text-message event
     return Promise.resolve(null);
   }
 
-  // create an echoing text message
-  const echo = { type: "text", text: event.message.text };
+  console.log("message::", event.message);
+  console.log("source::", event.source);
 
-  // use reply API
-  return client.replyMessage({
-    replyToken: event.replyToken,
-    messages: [echo],
-  });
+  const userMessage = event.message.text;
+  const weightMatch = userMessage.match(/^體重\s*(\d+(\.\d+)?)$/);
+
+  if (weightMatch) {
+    const weight = parseFloat(weightMatch[1]); // 提取體重數值
+    let displayName = "您";
+    const { type, userId } = event.source;
+
+    const profile = await getUserProfile(userId);
+    console.log(" handleEvent ~ profile:", profile);
+    displayName = profile.displayName;
+
+    return client.replyMessage({
+      replyToken: event.replyToken,
+      messages: [
+        {
+          type: "text",
+          text: `已記錄${displayName}的體重 [${weight}] kg, 吃太少囉`,
+        },
+      ],
+    });
+  }
+  return Promise.resolve();
+}
+
+// 取得使用者名稱的輔助函數
+async function getUserProfile(userId) {
+  try {
+    const response = await client.getProfile(userId);
+    return response;
+  } catch (err) {
+    console.error("取得使用者名稱時出錯:", err);
+    throw err;
+  }
 }
 
 // listen on port
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 8080;
 app.listen(port, () => {
   console.log(`listening on ${port}`);
 });
