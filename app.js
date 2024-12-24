@@ -1,6 +1,8 @@
 const line = require("@line/bot-sdk");
 const express = require("express");
 const axios = require("axios");
+const addWeightRecord = require("./db");
+
 require("dotenv").config();
 
 // create LINE SDK config from env variables
@@ -48,24 +50,45 @@ async function handleEvent(event) {
   const weightMatch = userMessage.match(/^體重\s*(\d+(\.\d+)?)$/);
 
   if (weightMatch) {
-    const weight = parseFloat(weightMatch[1]); // 提取體重數值
-    let displayName = "您";
-    const { type, userId } = event.source;
+    try {
+      const weight = parseFloat(weightMatch[1]); // 提取體重數值
+      let displayName = "您";
+      const { type, userId } = event.source;
 
-    const profile = await getUserProfile(userId);
-    console.log(" handleEvent ~ profile:", profile);
-    displayName = profile.displayName;
+      const profile = await getUserProfile(userId);
+      console.log(" handleEvent ~ profile:", profile);
+      displayName = profile.displayName;
 
-    return client.replyMessage({
-      replyToken: event.replyToken,
-      messages: [
-        {
-          type: "text",
-          text: `已記錄${displayName}的體重 [${weight}] kg, 吃太少囉`,
-        },
-      ],
-    });
+      await addWeightRecord({
+        userId,
+        weight,
+        timestamp: new Date(),
+        note: "",
+      });
+
+      return client.replyMessage({
+        replyToken: event.replyToken,
+        messages: [
+          {
+            type: "text",
+            text: `已記錄${displayName}的體重 [${weight}] kg, 吃太少囉`,
+          },
+        ],
+      });
+    } catch (err) {
+      console.log(err);
+      return client.replyMessage({
+        replyToken: event.replyToken,
+        messages: [
+          {
+            type: "text",
+            text: "無法記錄體重，請稍後再試！",
+          },
+        ],
+      });
+    }
   }
+
   return Promise.resolve();
 }
 
