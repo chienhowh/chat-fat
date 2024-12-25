@@ -67,7 +67,7 @@ async function handleEvent(event) {
         messages: [
           {
             type: "text",
-            text: `已記錄${displayName}的體重 ${weight} kg, 吃太少囉`,
+            text: `已記錄${displayName}的體重 ${weight} kg, ${coachReply()}`,
           },
         ],
       });
@@ -102,6 +102,18 @@ async function getUserProfile(source) {
   } catch (err) {
     throw new Error(`取得使用者名稱${userId}時出錯:`, err);
   }
+}
+
+function coachReply() {
+  const responses = [
+    "這麼胖還有臉報告？",
+    "還敢吃？訓練量加倍！",
+    "體重還在飆？今天卡路里砍一半！",
+    "努力呢？還想繼續放縱嗎？",
+    "你是在給我交代，還是給自己找藉口？",
+  ];
+  const randomIndex = Math.floor(Math.random() * responses.length);
+  return responses[randomIndex];
 }
 
 // listen on port
