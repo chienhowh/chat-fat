@@ -43,19 +43,15 @@ async function handleEvent(event) {
     return Promise.resolve(null);
   }
 
-  console.log("message::", event.message);
-  console.log("source::", event.source);
-
   const userMessage = event.message.text;
-  const weightMatch = userMessage.match(/^體重\s*(\d+(\.\d+)?)$/);
+  const weightMatch = userMessage.match(/體重\s*(\d+(\.\d+)?)/);
 
   if (weightMatch) {
     try {
       const weight = parseFloat(weightMatch[1]); // 提取體重數值
       let displayName = "您";
-      const { type, userId } = event.source;
-
-      const profile = await getUserProfile(userId);
+      const { userId } = event.source;
+      const profile = await getUserProfile(event.source);
       console.log(" handleEvent ~ profile:", profile);
       displayName = profile.displayName;
 
@@ -71,12 +67,12 @@ async function handleEvent(event) {
         messages: [
           {
             type: "text",
-            text: `已記錄${displayName}的體重 [${weight}] kg, 吃太少囉`,
+            text: `已記錄${displayName}的體重 ${weight} kg, 吃太少囉`,
           },
         ],
       });
     } catch (err) {
-      console.log(err);
+      console.log("err::", err);
       return client.replyMessage({
         replyToken: event.replyToken,
         messages: [
@@ -93,13 +89,18 @@ async function handleEvent(event) {
 }
 
 // 取得使用者名稱的輔助函數
-async function getUserProfile(userId) {
+async function getUserProfile(source) {
+  const { type, groupId, userId } = source;
   try {
-    const response = await client.getProfile(userId);
+    let response;
+    if (type === "group") {
+      response = await client.getGroupMemberProfile(groupId, userId);
+    } else {
+      response = await client.getProfile(userId);
+    }
     return response;
   } catch (err) {
-    console.error("取得使用者名稱時出錯:", err);
-    throw err;
+    throw new Error(`取得使用者名稱${userId}時出錯:`, err);
   }
 }
 

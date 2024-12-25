@@ -22,11 +22,9 @@ async function addWeightRecord(weightRecord) {
       .collection("weight_records")
       .insertOne(weightRecord);
 
-    console.log("Document inserted with ID:", result.insertedId);
     return result.insertedId;
   } catch (err) {
-    console.error("Error inserting record:", err);
-    throw new Error("資料庫操作失敗");
+    throw new Error("資料庫操作失敗", err);
   } finally {
     await client.close();
   }
