@@ -12,22 +12,30 @@ const client = new MongoClient(uri, {
 });
 
 async function addWeightRecord(weightRecord) {
+  return performDb("weight_records", async (collection) => {
+    const result = await collection.insertOne(weightRecord);
+    return result.insertedId;
+  });
+}
+
+async function addRole(role) {
+  return performDb("role_records", async (collection) => {
+    const result = await collection.insertOne(role);
+    return result.insertedId;
+  });
+}
+
+async function performDb(collectionName, callback) {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     console.log("Connected to MongoDB!");
-
-    const result = await client
-      .db("chatfat")
-      .collection("weight_records")
-      .insertOne(weightRecord);
-
-    return result.insertedId;
+    const collection = await client.db("chatfat").collection(collectionName);
+    return await callback(collection);
   } catch (err) {
-    throw new Error("資料庫操作失敗", err);
+    throw new Error(`資料庫操作失敗: ${err.message}`);
   } finally {
     await client.close();
   }
 }
 
-module.exports = addWeightRecord;
+module.exports = { addWeightRecord, addRole };

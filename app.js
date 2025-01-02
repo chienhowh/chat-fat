@@ -1,7 +1,7 @@
 const line = require("@line/bot-sdk");
 const express = require("express");
 const axios = require("axios");
-const addWeightRecord = require("./db");
+const { addWeightRecord, addRole } = require("./db");
 
 require("dotenv").config();
 
@@ -45,6 +45,50 @@ async function handleEvent(event) {
 
   const userMessage = event.message.text;
   const weightMatch = userMessage.match(/體重\s*(\d+(\.\d+)?)/);
+
+  if (userMessage === "選角色") {
+    return client.replyMessage({
+      replyToken: event.replyToken,
+      messages: [
+        {
+          type: "text",
+          text: "請選擇您的專屬教練：",
+          quickReply: {
+            items: [
+              {
+                type: "action",
+                action: {
+                  label: "A.嚴厲教練",
+                  text: "嚴厲教練",
+                },
+              },
+              {
+                type: "action",
+                action: {
+                  label: "B.色色旻柔",
+                  text: "色色旻柔",
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+  }
+
+  if (["嚴厲教練", "色色旻柔"].includes(userMessage)) {
+    const { userId } = event.source;
+    await addRole({ userId, role: userMessage });
+    return client.replyMessage({
+      replyToken: event.replyToken,
+      messages: [
+        {
+          type: "text",
+          text: `您選擇了${userMessage}`,
+        },
+      ],
+    });
+  }
 
   if (weightMatch) {
     try {
