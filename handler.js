@@ -1,4 +1,10 @@
 const { addWeightRecord, addRole, getRole } = require("./db");
+require("dotenv").config();
+const line = require("@line/bot-sdk");
+// create LINE SDK client
+const client = new line.messagingApi.MessagingApiClient({
+  channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
+});
 
 async function handleRoleSelection(event) {
   return client.replyMessage({

@@ -13,11 +13,6 @@ const config = {
   channelSecret: process.env.CHANNEL_SECRET,
 };
 
-// create LINE SDK client
-const client = new line.messagingApi.MessagingApiClient({
-  channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
-});
-
 // create Express app
 // about Express itself: https://expressjs.com/
 const app = express();
