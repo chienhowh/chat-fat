@@ -18,10 +18,17 @@ async function addWeightRecord(weightRecord) {
   });
 }
 
-async function addRole(role) {
+async function addRole(roleRecord) {
   return performDb("role_records", async (collection) => {
-    const result = await collection.insertOne(role);
+    const result = await collection.insertOne(roleRecord);
     return result.insertedId;
+  });
+}
+
+async function getRole(userId) {
+  return performDb("role_records", async (collection) => {
+    const result = await collection.findOne({ userId });
+    return result;
   });
 }
 
@@ -38,4 +45,4 @@ async function performDb(collectionName, callback) {
   }
 }
 
-module.exports = { addWeightRecord, addRole };
+module.exports = { addWeightRecord, addRole, getRole };
