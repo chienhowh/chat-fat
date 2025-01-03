@@ -46,7 +46,7 @@ async function handleEvent(event) {
     return handleRoleSelection(event);
   }
 
-  if (["嚴厲教練", "色色旻柔"].includes(userMessage)) {
+  if (["嚴厲教練", "色色旻柔", "雞湯教練"].includes(userMessage)) {
     return handleRoleConfirmation(event, userMessage);
   }
 
