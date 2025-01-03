@@ -18,9 +18,13 @@ async function addWeightRecord(weightRecord) {
   });
 }
 
-async function addRole(roleRecord) {
+async function addRole(userId, roleRecord) {
   return performDb("role_records", async (collection) => {
-    const result = await collection.insertOne(roleRecord);
+    const result = await collection.updateOne(
+      { userId },
+      { $set: roleRecord },
+      { upsert: true }
+    );
     return result.insertedId;
   });
 }
