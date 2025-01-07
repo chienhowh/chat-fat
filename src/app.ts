@@ -21,12 +21,12 @@ const app = express();
 
 // register a webhook handler with middleware
 // about the middleware, please refer to doc
-app.get("/", (req, res) => {
+app.get("/", (req: any, res: any) => {
   console.log("work");
   res.send("Hello World!");
 });
 
-app.post("/lineWebhook", line.middleware(config), (req, res) => {
+app.post("/lineWebhook", line.middleware(config), (req: any, res: any) => {
   console.log("req::", req.body);
   Promise.all(req.body.events.map(handleEvent))
     .then((result) => res.json(result))
@@ -36,7 +36,7 @@ app.post("/lineWebhook", line.middleware(config), (req, res) => {
     });
 });
 
-async function handleEvent(event) {
+async function handleEvent(event: any) {
   if (event.type !== "message" || event.message.type !== "text") {
     // ignore non-text-message event
     return Promise.resolve(null);
