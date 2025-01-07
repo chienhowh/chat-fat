@@ -1,4 +1,10 @@
-const { addWeightRecord, addRole, getRole } = require("./db");
+const {
+  addWeightRecord,
+  addRole,
+  getRole,
+  addWeighTimeReminder,
+  addUser,
+} = require("./db");
 require("dotenv").config();
 const line = require("@line/bot-sdk");
 // create LINE SDK client
@@ -107,6 +113,36 @@ async function handleAddWeight(event, weight) {
   }
 }
 
+async function handleSendReminder(userId, message) {
+  console.log("🚀 ~ handleSendReminder ~ userId:", userId);
+  try {
+    return client.pushMessage({
+      to: userId,
+      messages: [{ type: "text", text: message }],
+    });
+  } catch (err) {
+    console.error(`發送提醒失敗: ${err.message}`);
+  }
+}
+
+async function handleNewFollowers(event) {
+  try {
+    const userId = event.source.userId;
+    const [newUser, weighTime] = await Promise.all(
+      addUser(userId),
+      addWeighTimeReminder(userId, {
+        reminderTime: "0800",
+      })
+    );
+    return client.pushMessage({
+      to: userId,
+      messages: [{ type: "text", text: message }],
+    });
+  } catch (err) {
+    console.error(`發送提醒失敗: ${err.message}`);
+  }
+}
+
 // Line API
 async function getUserProfile(source) {
   const { type, groupId, userId } = source;
@@ -206,4 +242,6 @@ module.exports = {
   handleRoleSelection,
   handleRoleConfirmation,
   handleAddWeight,
+  handleSendReminder,
+  handleNewFollowers,
 };

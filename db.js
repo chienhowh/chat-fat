@@ -11,6 +11,24 @@ const client = new MongoClient(uri, {
   },
 });
 
+async function addUser(userId) {
+  return performDb("users", async (collection) => {
+    const result = await collection.insertOne({ _id: userId });
+    return result.insertedId;
+  });
+}
+
+async function addWeighTimeReminder(userId, params) {
+  return performDb("weigh_time_reminder", async (collection) => {
+    const result = await collection.updateOne(
+      { userId },
+      { $set: params },
+      { upsert: true }
+    );
+    return result.insertedId;
+  });
+}
+
 async function addWeightRecord(weightRecord) {
   return performDb("weight_records", async (collection) => {
     const result = await collection.insertOne(weightRecord);
@@ -49,4 +67,10 @@ async function performDb(collectionName, callback) {
   }
 }
 
-module.exports = { addWeightRecord, addRole, getRole };
+module.exports = {
+  addWeightRecord,
+  addRole,
+  getRole,
+  addUser,
+  addWeighTimeReminder,
+};

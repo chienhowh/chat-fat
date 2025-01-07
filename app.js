@@ -4,6 +4,8 @@ const {
   handleAddWeight,
   handleRoleSelection,
   handleRoleConfirmation,
+  handleSendReminder,
+  handleNewFollowers,
 } = require("./handler");
 
 require("dotenv").config();
@@ -53,6 +55,17 @@ async function handleEvent(event) {
   const weightMatch = userMessage.match(/體重\s*(\d+(\.\d+)?)/);
   if (weightMatch) {
     return handleAddWeight(event, parseFloat(weightMatch[1]));
+  }
+
+  // TODO: 收到加好友訊息
+  if (userMessage === "add") {
+    return handleNewFollowers(event);
+  }
+
+  // TODO:
+  if (userMessage === "提醒運動") {
+    const { userId } = event.source;
+    return handleSendReminder(userId, "記得運動");
   }
 
   return Promise.resolve();
