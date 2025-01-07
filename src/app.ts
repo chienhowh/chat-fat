@@ -1,18 +1,19 @@
-const line = require("@line/bot-sdk");
-const express = require("express");
-const {
-  handleAddWeight,
+import { middleware } from "@line/bot-sdk";
+import express from "express";
+import dotenv from "dotenv";
+import {
   handleRoleSelection,
   handleRoleConfirmation,
-  handleSendReminder,
+  handleAddWeight,
   handleNewFollowers,
-} = require("./handler");
+  handleSendReminder,
+} from "./handler";
 
-require("dotenv").config();
+dotenv.config();
 
 // create LINE SDK config from env variables
 const config = {
-  channelSecret: process.env.CHANNEL_SECRET,
+  channelSecret: process.env.CHANNEL_SECRET || "",
 };
 
 // create Express app
@@ -26,7 +27,7 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-app.post("/lineWebhook", line.middleware(config), (req, res) => {
+app.post("/lineWebhook", middleware(config), (req, res) => {
   console.log("req::", req.body);
   Promise.all(req.body.events.map(handleEvent))
     .then((result) => res.json(result))
