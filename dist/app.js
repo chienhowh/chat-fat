@@ -1,4 +1,3 @@
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -8,29 +7,25 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const bot_sdk_1 = require("@line/bot-sdk");
-const express_1 = __importDefault(require("express"));
-const dotenv_1 = __importDefault(require("dotenv"));
-const handler_1 = require("./handler");
-dotenv_1.default.config();
+import { middleware } from "@line/bot-sdk";
+import express from "express";
+import dotenv from "dotenv";
+import { handleRoleSelection, handleRoleConfirmation, handleAddWeight, handleNewFollowers, handleSendReminder, } from "./handler";
+dotenv.config();
 // create LINE SDK config from env variables
 const config = {
     channelSecret: process.env.CHANNEL_SECRET || "",
 };
 // create Express app
 // about Express itself: https://expressjs.com/
-const app = (0, express_1.default)();
+const app = express();
 // register a webhook handler with middleware
 // about the middleware, please refer to doc
 app.get("/", (req, res) => {
     console.log("work");
     res.send("Hello World!");
 });
-app.post("/lineWebhook", (0, bot_sdk_1.middleware)(config), (req, res) => {
+app.post("/lineWebhook", middleware(config), (req, res) => {
     console.log("req::", req.body);
     Promise.all(req.body.events.map(handleEvent))
         .then((result) => res.json(result))
@@ -47,24 +42,24 @@ function handleEvent(event) {
         }
         const userMessage = event.message.text;
         if (userMessage === "選教練") {
-            return (0, handler_1.handleRoleSelection)(event);
+            return handleRoleSelection(event);
         }
         // 應該要能直接針對quickreply
         if (["嚴厲教練", "色色旻柔", "雞湯教練"].includes(userMessage)) {
-            return (0, handler_1.handleRoleConfirmation)(event, userMessage);
+            return handleRoleConfirmation(event, userMessage);
         }
         const weightMatch = userMessage.match(/體重\s*(\d+(\.\d+)?)/);
         if (weightMatch) {
-            return (0, handler_1.handleAddWeight)(event, parseFloat(weightMatch[1]));
+            return handleAddWeight(event, parseFloat(weightMatch[1]));
         }
         // TODO: 收到加好友訊息
         if (userMessage === "add") {
-            return (0, handler_1.handleNewFollowers)(event);
+            return handleNewFollowers(event);
         }
         // TODO:
         if (userMessage === "提醒運動") {
             const { userId } = event.source;
-            return (0, handler_1.handleSendReminder)(userId, "記得運動");
+            return handleSendReminder(userId, "記得運動");
         }
         return Promise.resolve();
     });

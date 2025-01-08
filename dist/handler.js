@@ -1,4 +1,3 @@
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -8,25 +7,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.handleRoleSelection = handleRoleSelection;
-exports.handleRoleConfirmation = handleRoleConfirmation;
-exports.handleAddWeight = handleAddWeight;
-exports.handleSendReminder = handleSendReminder;
-exports.handleNewFollowers = handleNewFollowers;
-const bot_sdk_1 = require("@line/bot-sdk");
-const dotenv_1 = __importDefault(require("dotenv"));
-const db_js_1 = require("./db.js");
-const err_js_1 = require("./utilites/err.js");
-dotenv_1.default.config();
+import { Client } from "@line/bot-sdk";
+import dotenv from "dotenv";
+import { addWeightRecord, addRole, getRole, addWeighTimeReminder, addUser, } from "./db.js";
+import { throwCustomError } from "./utilites/err.js";
+dotenv.config();
 // create LINE SDK client
-const client = new bot_sdk_1.Client({
+const client = new Client({
     channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN || "",
 });
-function handleRoleSelection(event) {
+export function handleRoleSelection(event) {
     return __awaiter(this, void 0, void 0, function* () {
         return client.replyMessage(event.replyToken, {
             type: "text",
@@ -62,17 +52,17 @@ function handleRoleSelection(event) {
         });
     });
 }
-function handleRoleConfirmation(event, role) {
+export function handleRoleConfirmation(event, role) {
     return __awaiter(this, void 0, void 0, function* () {
         const { userId } = event.source;
-        yield (0, db_js_1.addRole)(userId, { userId: userId, role });
+        yield addRole(userId, { userId: userId, role });
         return client.replyMessage(event.replyToken, {
             type: "text",
             text: `您選擇了${role}做為您的教練!`,
         });
     });
 }
-function handleAddWeight(event, weight) {
+export function handleAddWeight(event, weight) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             let displayName = "您";
@@ -80,13 +70,13 @@ function handleAddWeight(event, weight) {
             const profile = yield getUserProfile(event.source);
             console.log(" handleEvent ~ profile:", profile);
             displayName = profile.displayName;
-            yield (0, db_js_1.addWeightRecord)({
+            yield addWeightRecord({
                 userId: userId,
                 weight,
                 timestamp: new Date(),
                 note: "",
             });
-            const role = yield (0, db_js_1.getRole)(userId);
+            const role = yield getRole(userId);
             const messages = [
                 {
                     type: "text",
@@ -110,7 +100,7 @@ function handleAddWeight(event, weight) {
         }
     });
 }
-function handleSendReminder(userId, message) {
+export function handleSendReminder(userId, message) {
     return __awaiter(this, void 0, void 0, function* () {
         console.log("🚀 ~ handleSendReminder ~ userId:", userId);
         try {
@@ -120,17 +110,17 @@ function handleSendReminder(userId, message) {
             });
         }
         catch (err) {
-            (0, err_js_1.throwCustomError)(`發送提醒失敗`, err);
+            throwCustomError(`發送提醒失敗`, err);
         }
     });
 }
-function handleNewFollowers(event) {
+export function handleNewFollowers(event) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const userId = event.source.userId;
             yield Promise.all([
-                (0, db_js_1.addUser)(userId),
-                (0, db_js_1.addWeighTimeReminder)(userId, {
+                addUser(userId),
+                addWeighTimeReminder(userId, {
                     userId: userId,
                     reminderTime: "0800",
                 }),
@@ -141,7 +131,7 @@ function handleNewFollowers(event) {
             });
         }
         catch (err) {
-            (0, err_js_1.throwCustomError)(`發送提醒失敗`, err);
+            throwCustomError(`發送提醒失敗`, err);
         }
     });
 }
@@ -160,7 +150,7 @@ function getUserProfile(source) {
             return response;
         }
         catch (err) {
-            (0, err_js_1.throwCustomError)(`取得使用者名稱 ${userId} 時出錯`, err);
+            throwCustomError(`取得使用者名稱 ${userId} 時出錯`, err);
         }
     });
 }
