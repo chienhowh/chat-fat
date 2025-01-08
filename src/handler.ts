@@ -1,4 +1,4 @@
-import * as line from "@line/bot-sdk";
+import { Client, middleware } from "@line/bot-sdk";
 import dotenv from "dotenv";
 import {
   addWeightRecord,
@@ -7,15 +7,22 @@ import {
   addWeighTimeReminder,
   addUser,
 } from "./db.js";
+import {
+  LINEEventSource,
+  LINEMessage,
+  LINEMessageEvent,
+} from "./types/global.js";
+import { PtRole } from "./types/db.interface.js";
+import { throwCustomError } from "./utilites/err.js";
 
 dotenv.config();
 
 // create LINE SDK client
-const client = new line.Client({
-  channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
+const client = new Client({
+  channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN || "",
 });
 
-export async function handleRoleSelection(event) {
+export async function handleRoleSelection(event: LINEMessageEvent) {
   return client.replyMessage(event.replyToken, {
     type: "text",
     text: "請選擇您的專屬教練：",
@@ -50,16 +57,19 @@ export async function handleRoleSelection(event) {
   });
 }
 
-export async function handleRoleConfirmation(event, role) {
+export async function handleRoleConfirmation(
+  event: LINEMessageEvent,
+  role: string
+) {
   const { userId } = event.source;
-  await addRole(userId, { userId, role });
+  await addRole(userId!, { userId: userId!, role });
   return client.replyMessage(event.replyToken, {
     type: "text",
     text: `您選擇了${role}做為您的教練!`,
   });
 }
 
-export async function handleAddWeight(event, weight) {
+export async function handleAddWeight(event: LINEMessageEvent, weight: number) {
   try {
     let displayName = "您";
     const { userId } = event.source;
@@ -68,14 +78,14 @@ export async function handleAddWeight(event, weight) {
     displayName = profile.displayName;
 
     await addWeightRecord({
-      userId,
+      userId: userId!,
       weight,
       timestamp: new Date(),
       note: "",
     });
 
-    const role = await getRole(userId);
-    const messages = [
+    const role = await getRole(userId!);
+    const messages: LINEMessage[] = [
       {
         type: "text",
         text: `已記錄${displayName}的體重 ${weight} kg`,
@@ -98,7 +108,7 @@ export async function handleAddWeight(event, weight) {
   }
 }
 
-export async function handleSendReminder(userId, message) {
+export async function handleSendReminder(userId: string, message: string) {
   console.log("🚀 ~ handleSendReminder ~ userId:", userId);
   try {
     return client.pushMessage(userId, {
@@ -106,16 +116,17 @@ export async function handleSendReminder(userId, message) {
       text: message,
     });
   } catch (err) {
-    console.error(`發送提醒失敗: ${err.message}`);
+    throwCustomError(`發送提醒失敗`, err);
   }
 }
 
-export async function handleNewFollowers(event) {
+export async function handleNewFollowers(event: LINEMessageEvent) {
   try {
-    const userId = event.source.userId;
+    const userId = event.source.userId!;
     await Promise.all([
       addUser(userId),
       addWeighTimeReminder(userId, {
+        userId: userId!,
         reminderTime: "0800",
       }),
     ]);
@@ -124,26 +135,27 @@ export async function handleNewFollowers(event) {
       text: "歡迎加入！",
     });
   } catch (err) {
-    console.error(`發送提醒失敗: ${err.message}`);
+    throwCustomError(`發送提醒失敗`, err);
   }
 }
 
-async function getUserProfile(source) {
-  const { type, groupId, userId } = source;
+async function getUserProfile(source: LINEEventSource) {
+  const { type, userId } = source;
   try {
     let response;
     if (type === "group") {
-      response = await client.getGroupMemberProfile(groupId, userId);
+      const { groupId } = source;
+      response = await client.getGroupMemberProfile(groupId, userId!);
     } else {
-      response = await client.getProfile(userId);
+      response = await client.getProfile(userId!);
     }
     return response;
   } catch (err) {
-    throw new Error(`取得使用者名稱${userId}時出錯:`, err);
+    throwCustomError(`取得使用者名稱 ${userId} 時出錯`, err);
   }
 }
 
-function coachReply(ptRole) {
+function coachReply(ptRole: PtRole) {
   const role = ptRole ? ptRole.role : "嚴厲教練";
   const coaches = [
     {
@@ -179,4 +191,11 @@ function coachReply(ptRole) {
   ];
   const responses = coaches.find((item) => item.name === role)?.quotes ?? [];
   return responses[Math.floor(Math.random() * responses.length)];
+}
+
+function getErrorMessage(err: unknown): string {
+  if (err instanceof Error) {
+    return err.message;
+  }
+  return String(err);
 }

@@ -8,6 +8,7 @@ import {
   handleNewFollowers,
   handleSendReminder,
 } from "./handler";
+import { LINEWebhookEvent } from "./types/global";
 
 dotenv.config();
 
@@ -37,7 +38,7 @@ app.post("/lineWebhook", middleware(config), (req, res) => {
     });
 });
 
-async function handleEvent(event) {
+async function handleEvent(event: LINEWebhookEvent) {
   if (event.type !== "message" || event.message.type !== "text") {
     // ignore non-text-message event
     return Promise.resolve(null);
@@ -49,6 +50,7 @@ async function handleEvent(event) {
     return handleRoleSelection(event);
   }
 
+  // 應該要能直接針對quickreply
   if (["嚴厲教練", "色色旻柔", "雞湯教練"].includes(userMessage)) {
     return handleRoleConfirmation(event, userMessage);
   }
@@ -66,7 +68,7 @@ async function handleEvent(event) {
   // TODO:
   if (userMessage === "提醒運動") {
     const { userId } = event.source;
-    return handleSendReminder(userId, "記得運動");
+    return handleSendReminder(userId!, "記得運動");
   }
 
   return Promise.resolve();
