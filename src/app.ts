@@ -1,18 +1,20 @@
-const line = require("@line/bot-sdk");
-const express = require("express");
-const {
-  handleAddWeight,
+import { middleware } from "@line/bot-sdk";
+import express from "express";
+import dotenv from "dotenv";
+import {
   handleRoleSelection,
   handleRoleConfirmation,
-  handleSendReminder,
+  handleAddWeight,
   handleNewFollowers,
-} = require("./handler");
+  handleSendReminder,
+} from "./handler";
+import { LINEWebhookEvent } from "./types/global";
 
-require("dotenv").config();
+dotenv.config();
 
 // create LINE SDK config from env variables
 const config = {
-  channelSecret: process.env.CHANNEL_SECRET,
+  channelSecret: process.env.CHANNEL_SECRET || "",
 };
 
 // create Express app
@@ -26,7 +28,7 @@ app.get("/", (req: any, res: any) => {
   res.send("Hello World!");
 });
 
-app.post("/lineWebhook", line.middleware(config), (req: any, res: any) => {
+app.post("/lineWebhook", middleware(config), (req, res) => {
   console.log("req::", req.body);
   Promise.all(req.body.events.map(handleEvent))
     .then((result) => res.json(result))
@@ -36,7 +38,7 @@ app.post("/lineWebhook", line.middleware(config), (req: any, res: any) => {
     });
 });
 
-async function handleEvent(event: any) {
+async function handleEvent(event: LINEWebhookEvent) {
   if (event.type !== "message" || event.message.type !== "text") {
     // ignore non-text-message event
     return Promise.resolve(null);
@@ -48,6 +50,7 @@ async function handleEvent(event: any) {
     return handleRoleSelection(event);
   }
 
+  // 應該要能直接針對quickreply
   if (["嚴厲教練", "色色旻柔", "雞湯教練"].includes(userMessage)) {
     return handleRoleConfirmation(event, userMessage);
   }
@@ -65,7 +68,7 @@ async function handleEvent(event: any) {
   // TODO:
   if (userMessage === "提醒運動") {
     const { userId } = event.source;
-    return handleSendReminder(userId, "記得運動");
+    return handleSendReminder(userId!, "記得運動");
   }
 
   return Promise.resolve();
