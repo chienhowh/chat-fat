@@ -1,7 +1,7 @@
 import { Collection, Document, MongoClient, ServerApiVersion } from "mongodb";
 import dotenv from "dotenv";
-import { PtRole, Reminder, WeightRecord } from "./types/db.interface";
-import { throwCustomError } from "./utilites/err";
+import { PtRole, Reminder, WeightRecord } from "./types/db.interface.js";
+import { throwCustomError } from "./utilites/err.js";
 
 dotenv.config();
 

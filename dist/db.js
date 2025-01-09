@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { MongoClient, ServerApiVersion } from "mongodb";
 import dotenv from "dotenv";
-import { throwCustomError } from "./utilites/err";
+import { throwCustomError } from "./utilites/err.js";
 dotenv.config();
 const uri = `mongodb+srv://chienhowh:${process.env.MONGODB_ATLAS}@cluster0.onb0g.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version

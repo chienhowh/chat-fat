@@ -192,10 +192,3 @@ function coachReply(ptRole: PtRole) {
   const responses = coaches.find((item) => item.name === role)?.quotes ?? [];
   return responses[Math.floor(Math.random() * responses.length)];
 }
-
-function getErrorMessage(err: unknown): string {
-  if (err instanceof Error) {
-    return err.message;
-  }
-  return String(err);
-}

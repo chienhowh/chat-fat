@@ -7,8 +7,8 @@ import {
   handleAddWeight,
   handleNewFollowers,
   handleSendReminder,
-} from "./handler";
-import { LINEWebhookEvent } from "./types/global";
+} from "./handler.js";
+import { LINEWebhookEvent } from "./types/global.js";
 
 dotenv.config();
 

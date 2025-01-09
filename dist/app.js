@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { middleware } from "@line/bot-sdk";
 import express from "express";
 import dotenv from "dotenv";
-import { handleRoleSelection, handleRoleConfirmation, handleAddWeight, handleNewFollowers, handleSendReminder, } from "./handler";
+import { handleRoleSelection, handleRoleConfirmation, handleAddWeight, handleNewFollowers, handleSendReminder, } from "./handler.js";
 dotenv.config();
 // create LINE SDK config from env variables
 const config = {
