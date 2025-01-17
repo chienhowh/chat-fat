@@ -17,7 +17,10 @@ const client = new MongoClient(uri, {
 
 export async function addUser(userId: string) {
   return performDb("users", async (collection) => {
-    const result = await collection.insertOne({ _id: userId as any });
+    const result = await collection.insertOne({
+      userId,
+      weighReminder: "0900",
+    });
     return result.insertedId;
   });
 }
