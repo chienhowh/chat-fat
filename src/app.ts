@@ -7,9 +7,11 @@ import {
   handleAddWeight,
   handleNewFollowers,
   handleSendReminder,
+  sendNotification,
 } from "./handler.js";
 import { LINEWebhookEvent } from "./types/global.js";
-
+import schedule from "node-schedule";
+import { getPendingReminders } from "./db.js";
 dotenv.config();
 
 // create LINE SDK config from env variables
@@ -78,4 +80,23 @@ async function handleEvent(event: LINEWebhookEvent) {
 const port = process.env.PORT || 8080;
 app.listen(port, () => {
   console.log(`listening on ${port}`);
+});
+
+schedule.scheduleJob("*/5 * * * *", async () => {
+  console.log(`檢查提醒時間範圍: ${new Date().toISOString()}`);
+  try {
+    const now = new Date();
+    const reminders = await getPendingReminders(now, "weighReminder");
+    if (reminders.length === 0) {
+      console.log("沒有需要提醒的任務");
+      return;
+    }
+
+    for (const reminder of reminders) {
+      console.log(`提醒用戶 ${reminder.userId}, ${reminder.userName}`);
+      await sendNotification(reminder);
+    }
+  } catch (err) {
+    console.error("處理提醒時出錯:", err);
+  }
 });

@@ -1,4 +1,4 @@
-import { Client, middleware } from "@line/bot-sdk";
+import { Client, middleware, User } from "@line/bot-sdk";
 import dotenv from "dotenv";
 import {
   addWeightRecord,
@@ -12,7 +12,7 @@ import {
   LINEMessage,
   LINEMessageEvent,
 } from "./types/global.js";
-import { PtRole } from "./types/db.interface.js";
+import { PtRole, UserRole } from "./types/db.interface.js";
 import { throwCustomError } from "./utilites/err.js";
 
 dotenv.config();
@@ -191,4 +191,17 @@ function coachReply(ptRole: PtRole) {
   ];
   const responses = coaches.find((item) => item.name === role)?.quotes ?? [];
   return responses[Math.floor(Math.random() * responses.length)];
+}
+
+export function convertTime(time: Date) {
+  const nowHour = time.getHours().toString().padStart(2, "0");
+  const nowMinute = time.getMinutes().toString().padStart(2, "0");
+  return `${nowHour}${nowMinute}`;
+}
+
+export async function sendNotification(role: UserRole) {
+  return client.pushMessage(role.userId, {
+    type: "text",
+    text: `${role.userName ?? ""}該量體重囉`,
+  });
 }

@@ -17,6 +17,8 @@ export interface Reminder {
 
 export interface UserRole {
   userId: string;
+  userName: string;
   ptRole: string;
-  weightReminder: string; // ex. 0900
+  weighReminder: string;
+  trainReminder: string; // ex. 0900
 }
