@@ -1,4 +1,4 @@
-import { Client, middleware, User } from "@line/bot-sdk";
+import { Client } from "@line/bot-sdk";
 import dotenv from "dotenv";
 import {
   addWeightRecord,
@@ -12,7 +12,7 @@ import {
   LINEMessage,
   LINEMessageEvent,
 } from "./types/global.js";
-import { PtRole, UserRole } from "./types/db.interface.js";
+import { UserRole } from "./types/db.interface.js";
 import { throwCustomError } from "./utilites/err.js";
 
 dotenv.config();
@@ -195,8 +195,8 @@ function coachReply(ptRole: string) {
 }
 
 export function convertTime(time: Date) {
-  const nowHour = time.getHours().toString().padStart(2, "0");
-  const nowMinute = time.getMinutes().toString().padStart(2, "0");
+  const nowHour = time.getUTCHours().toString().padStart(2, "0");
+  const nowMinute = time.getUTCMinutes().toString().padStart(2, "0");
   return `${nowHour}${nowMinute}`;
 }
 

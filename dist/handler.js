@@ -194,8 +194,8 @@ function coachReply(ptRole) {
     return responses[Math.floor(Math.random() * responses.length)];
 }
 export function convertTime(time) {
-    const nowHour = time.getHours().toString().padStart(2, "0");
-    const nowMinute = time.getMinutes().toString().padStart(2, "0");
+    const nowHour = time.getUTCHours().toString().padStart(2, "0");
+    const nowMinute = time.getUTCMinutes().toString().padStart(2, "0");
     return `${nowHour}${nowMinute}`;
 }
 export function sendNotification(role) {

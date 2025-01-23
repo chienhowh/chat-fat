@@ -76,13 +76,15 @@ export async function getPendingReminders(
   const laterReminderTime = convertTime(
     new Date(curTime.getTime() + 5 * 60 * 1000)
   );
-
+  console.log("🚀 ~ nowReminderTime:", nowReminderTime);
+  console.log("🚀 ~ laterReminderTime:", laterReminderTime);
   return performDb("users", async (collection) => {
     const result = await collection
       .find({
-        [reminderType]: { $gte: nowReminderTime, $lt: laterReminderTime },
+        weighReminder: { $gte: nowReminderTime, $lt: laterReminderTime },
       })
       .toArray();
+    console.log("🚀 ~ returnperformDb ~ result:", result);
     return result;
   });
 }
@@ -102,3 +104,8 @@ async function performDb(
     await client.close();
   }
 }
+
+process.on("SIGINT", async () => {
+  console.log("Closing connection...");
+  process.exit(0);
+});

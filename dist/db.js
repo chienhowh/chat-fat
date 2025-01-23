@@ -69,12 +69,15 @@ export function getPendingReminders(curTime, reminderType) {
     return __awaiter(this, void 0, void 0, function* () {
         const nowReminderTime = convertTime(curTime);
         const laterReminderTime = convertTime(new Date(curTime.getTime() + 5 * 60 * 1000));
+        console.log("🚀 ~ nowReminderTime:", nowReminderTime);
+        console.log("🚀 ~ laterReminderTime:", laterReminderTime);
         return performDb("users", (collection) => __awaiter(this, void 0, void 0, function* () {
             const result = yield collection
                 .find({
-                [reminderType]: { $gte: nowReminderTime, $lt: laterReminderTime },
+                weighReminder: { $gte: nowReminderTime, $lt: laterReminderTime },
             })
                 .toArray();
+            console.log("🚀 ~ returnperformDb ~ result:", result);
             return result;
         }));
     });
@@ -95,3 +98,7 @@ function performDb(collectionName, callback) {
         }
     });
 }
+process.on("SIGINT", () => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("Closing connection...");
+    process.exit(0);
+}));

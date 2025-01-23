@@ -76,6 +76,7 @@ schedule.scheduleJob("*/5 * * * *", () => __awaiter(void 0, void 0, void 0, func
     try {
         const now = new Date();
         const reminders = yield getPendingReminders(now, "weighReminder");
+        console.log("🚀 ~ schedule.scheduleJob ~ reminders:", reminders);
         if (reminders.length === 0) {
             console.log("沒有需要提醒的任務");
             return;
