@@ -3,9 +3,9 @@ import dotenv from "dotenv";
 import {
   addWeightRecord,
   addRole,
-  getRole,
   addWeighTimeReminder,
   addUser,
+  getUserProfile,
 } from "./db.js";
 import {
   LINEEventSource,
@@ -62,7 +62,7 @@ export async function handleRoleConfirmation(
   role: string
 ) {
   const { userId } = event.source;
-  await addRole(userId!, { userId: userId!, role });
+  await addRole(userId!, role);
   return client.replyMessage(event.replyToken, {
     type: "text",
     text: `您選擇了${role}做為您的教練!`,
@@ -73,7 +73,7 @@ export async function handleAddWeight(event: LINEMessageEvent, weight: number) {
   try {
     let displayName = "您";
     const { userId } = event.source;
-    const profile = await getUserProfile(event.source);
+    const profile = await getLineUserProfile(event.source);
     console.log(" handleEvent ~ profile:", profile);
     displayName = profile.displayName;
 
@@ -84,7 +84,7 @@ export async function handleAddWeight(event: LINEMessageEvent, weight: number) {
       note: "",
     });
 
-    const role = await getRole(userId!);
+    const role = await getUserProfile(userId!);
     const messages: LINEMessage[] = [
       {
         type: "text",
@@ -92,8 +92,8 @@ export async function handleAddWeight(event: LINEMessageEvent, weight: number) {
       },
       {
         type: "text",
-        text: role
-          ? coachReply(role)
+        text: role.ptRole
+          ? coachReply(role.ptRole)
           : "您尚未選擇教練，可輸入'選教練'挑選您的專屬教練!",
       },
     ];
@@ -139,7 +139,7 @@ export async function handleNewFollowers(event: LINEMessageEvent) {
   }
 }
 
-async function getUserProfile(source: LINEEventSource) {
+async function getLineUserProfile(source: LINEEventSource) {
   const { type, userId } = source;
   try {
     let response;
@@ -155,8 +155,8 @@ async function getUserProfile(source: LINEEventSource) {
   }
 }
 
-function coachReply(ptRole: PtRole) {
-  const role = ptRole ? ptRole.role : "嚴厲教練";
+function coachReply(ptRole: string) {
+  const role = ptRole ?? "嚴厲教練";
   const coaches = [
     {
       name: "嚴厲教練",
@@ -171,6 +171,7 @@ function coachReply(ptRole: PtRole) {
     {
       name: "色色旻柔",
       quotes: [
+        "人見人愛美少女",
         "深蹲記得下到底，像你談感情一樣，別老卡在半空中！",
         "杠鈴舉不起來？我看你手機挺能舉，來點平衡感吧！",
         "臥推推不動？平時不是挺會撩嗎？力氣去哪了？",

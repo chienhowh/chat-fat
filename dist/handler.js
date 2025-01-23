@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { Client } from "@line/bot-sdk";
 import dotenv from "dotenv";
-import { addWeightRecord, addRole, getRole, addWeighTimeReminder, addUser, } from "./db.js";
+import { addWeightRecord, addRole, addWeighTimeReminder, addUser, getUserProfile, } from "./db.js";
 import { throwCustomError } from "./utilites/err.js";
 dotenv.config();
 // create LINE SDK client
@@ -55,7 +55,7 @@ export function handleRoleSelection(event) {
 export function handleRoleConfirmation(event, role) {
     return __awaiter(this, void 0, void 0, function* () {
         const { userId } = event.source;
-        yield addRole(userId, { userId: userId, role });
+        yield addRole(userId, role);
         return client.replyMessage(event.replyToken, {
             type: "text",
             text: `您選擇了${role}做為您的教練!`,
@@ -67,7 +67,7 @@ export function handleAddWeight(event, weight) {
         try {
             let displayName = "您";
             const { userId } = event.source;
-            const profile = yield getUserProfile(event.source);
+            const profile = yield getLineUserProfile(event.source);
             console.log(" handleEvent ~ profile:", profile);
             displayName = profile.displayName;
             yield addWeightRecord({
@@ -76,7 +76,7 @@ export function handleAddWeight(event, weight) {
                 timestamp: new Date(),
                 note: "",
             });
-            const role = yield getRole(userId);
+            const role = yield getUserProfile(userId);
             const messages = [
                 {
                     type: "text",
@@ -84,8 +84,8 @@ export function handleAddWeight(event, weight) {
                 },
                 {
                     type: "text",
-                    text: role
-                        ? coachReply(role)
+                    text: role.ptRole
+                        ? coachReply(role.ptRole)
                         : "您尚未選擇教練，可輸入'選教練'挑選您的專屬教練!",
                 },
             ];
@@ -135,7 +135,7 @@ export function handleNewFollowers(event) {
         }
     });
 }
-function getUserProfile(source) {
+function getLineUserProfile(source) {
     return __awaiter(this, void 0, void 0, function* () {
         const { type, userId } = source;
         try {
@@ -156,7 +156,7 @@ function getUserProfile(source) {
 }
 function coachReply(ptRole) {
     var _a, _b;
-    const role = ptRole ? ptRole.role : "嚴厲教練";
+    const role = ptRole !== null && ptRole !== void 0 ? ptRole : "嚴厲教練";
     const coaches = [
         {
             name: "嚴厲教練",
@@ -171,6 +171,7 @@ function coachReply(ptRole) {
         {
             name: "色色旻柔",
             quotes: [
+                "人見人愛美少女",
                 "深蹲記得下到底，像你談感情一樣，別老卡在半空中！",
                 "杠鈴舉不起來？我看你手機挺能舉，來點平衡感吧！",
                 "臥推推不動？平時不是挺會撩嗎？力氣去哪了？",
@@ -192,9 +193,17 @@ function coachReply(ptRole) {
     const responses = (_b = (_a = coaches.find((item) => item.name === role)) === null || _a === void 0 ? void 0 : _a.quotes) !== null && _b !== void 0 ? _b : [];
     return responses[Math.floor(Math.random() * responses.length)];
 }
-function getErrorMessage(err) {
-    if (err instanceof Error) {
-        return err.message;
-    }
-    return String(err);
+export function convertTime(time) {
+    const nowHour = time.getHours().toString().padStart(2, "0");
+    const nowMinute = time.getMinutes().toString().padStart(2, "0");
+    return `${nowHour}${nowMinute}`;
+}
+export function sendNotification(role) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a;
+        return client.pushMessage(role.userId, {
+            type: "text",
+            text: `${(_a = role.userName) !== null && _a !== void 0 ? _a : ""}該量體重囉`,
+        });
+    });
 }

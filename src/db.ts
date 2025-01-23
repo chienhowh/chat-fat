@@ -50,19 +50,19 @@ export async function addWeightRecord(weightRecord: WeightRecord) {
   });
 }
 
-export async function addRole(userId: string, ptRole: PtRole) {
-  return performDb("role_records", async (collection) => {
+export async function addRole(userId: string, ptRole: string) {
+  return performDb("users", async (collection) => {
     const result = await collection.updateOne(
       { userId },
-      { $set: ptRole },
+      { $set: { ptRole } },
       { upsert: true }
     );
     return result.upsertedId || null;
   });
 }
 
-export async function getRole(userId: string) {
-  return performDb("role_records", async (collection) => {
+export async function getUserProfile(userId: string): Promise<UserRole> {
+  return performDb("users", async (collection) => {
     const result = await collection.findOne({ userId });
     return result;
   });

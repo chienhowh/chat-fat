@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { MongoClient, ServerApiVersion } from "mongodb";
 import dotenv from "dotenv";
 import { throwCustomError } from "./utilites/err.js";
+import { convertTime } from "./handler.js";
 dotenv.config();
 const uri = `mongodb+srv://chienhowh:${process.env.MONGODB_ATLAS}@cluster0.onb0g.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -23,7 +24,11 @@ const client = new MongoClient(uri, {
 export function addUser(userId) {
     return __awaiter(this, void 0, void 0, function* () {
         return performDb("users", (collection) => __awaiter(this, void 0, void 0, function* () {
-            const result = yield collection.insertOne({ _id: userId });
+            const result = yield collection.insertOne({
+                userId,
+                weighReminder: "0900",
+                trainReminder: "2000",
+            });
             return result.insertedId;
         }));
     });
@@ -46,16 +51,30 @@ export function addWeightRecord(weightRecord) {
 }
 export function addRole(userId, ptRole) {
     return __awaiter(this, void 0, void 0, function* () {
-        return performDb("role_records", (collection) => __awaiter(this, void 0, void 0, function* () {
-            const result = yield collection.updateOne({ userId }, { $set: ptRole }, { upsert: true });
+        return performDb("users", (collection) => __awaiter(this, void 0, void 0, function* () {
+            const result = yield collection.updateOne({ userId }, { $set: { ptRole } }, { upsert: true });
             return result.upsertedId || null;
         }));
     });
 }
-export function getRole(userId) {
+export function getUserProfile(userId) {
     return __awaiter(this, void 0, void 0, function* () {
-        return performDb("role_records", (collection) => __awaiter(this, void 0, void 0, function* () {
+        return performDb("users", (collection) => __awaiter(this, void 0, void 0, function* () {
             const result = yield collection.findOne({ userId });
+            return result;
+        }));
+    });
+}
+export function getPendingReminders(curTime, reminderType) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const nowReminderTime = convertTime(curTime);
+        const laterReminderTime = convertTime(new Date(curTime.getTime() + 5 * 60 * 1000));
+        return performDb("users", (collection) => __awaiter(this, void 0, void 0, function* () {
+            const result = yield collection
+                .find({
+                [reminderType]: { $gte: nowReminderTime, $lt: laterReminderTime },
+            })
+                .toArray();
             return result;
         }));
     });
