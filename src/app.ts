@@ -8,6 +8,8 @@ import {
   handleNewFollowers,
   handleSendReminder,
   sendNotification,
+  convertTime,
+  sendTrainNotification,
 } from "./handler.js";
 import { LINEWebhookEvent } from "./types/global.js";
 import schedule from "node-schedule";
@@ -86,16 +88,37 @@ schedule.scheduleJob("*/5 * * * *", async () => {
   console.log(`檢查提醒時間範圍: ${new Date().toISOString()}`);
   try {
     const now = new Date();
-    const reminders = await getPendingReminders(now, "weighReminder");
-    console.log("🚀 ~ schedule.scheduleJob ~ reminders:", reminders);
+    const startTime = convertTime(now);
+    const endTime = convertTime(new Date(now.getTime() + 5 * 60 * 1000));
+    const reminders = await getPendingReminders(startTime, endTime);
+
     if (reminders.length === 0) {
       console.log("沒有需要提醒的任務");
       return;
     }
 
-    for (const reminder of reminders) {
+    // 根據提醒類型分類用戶
+    const weighUsers = reminders.filter(
+      (user) =>
+        user.weighReminder &&
+        user.weighReminder >= startTime &&
+        user.weighReminder < endTime
+    );
+
+    const trainUsers = reminders.filter(
+      (user) =>
+        user.trainReminder &&
+        user.trainReminder >= startTime &&
+        user.trainReminder < endTime
+    );
+    for (const reminder of weighUsers) {
       console.log(`提醒用戶 ${reminder.userId}, ${reminder.userName}`);
       await sendNotification(reminder);
+    }
+
+    for (const reminder of trainUsers) {
+      console.log(`提醒用戶 ${reminder.userId}, ${reminder.userName}`);
+      await sendTrainNotification(reminder);
     }
   } catch (err) {
     console.error("處理提醒時出錯:", err);

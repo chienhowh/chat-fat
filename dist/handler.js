@@ -207,3 +207,18 @@ export function sendNotification(role) {
         });
     });
 }
+export function sendTrainNotification(role) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a;
+        return client.pushMessage(role.userId, [
+            {
+                type: "text",
+                text: `${(_a = role.userName) !== null && _a !== void 0 ? _a : ""}今天運動了嗎?`,
+            },
+            {
+                type: "text",
+                text: "別讓啞鈴等得太久，它可是比你曖昧對象更需要你的陪伴！",
+            },
+        ]);
+    });
+}

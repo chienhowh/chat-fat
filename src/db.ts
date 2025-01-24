@@ -69,22 +69,18 @@ export async function getUserProfile(userId: string): Promise<UserRole> {
 }
 
 export async function getPendingReminders(
-  curTime: Date,
-  reminderType: "weighReminder" | "trainReminder"
-) {
-  const nowReminderTime = convertTime(curTime);
-  const laterReminderTime = convertTime(
-    new Date(curTime.getTime() + 5 * 60 * 1000)
-  );
-  console.log("🚀 ~ nowReminderTime:", nowReminderTime);
-  console.log("🚀 ~ laterReminderTime:", laterReminderTime);
+  startTime: string,
+  endTime: string
+): Promise<UserRole[]> {
   return performDb("users", async (collection) => {
     const result = await collection
       .find({
-        weighReminder: { $gte: nowReminderTime, $lt: laterReminderTime },
+        $or: [
+          { weighReminder: { $gte: startTime, $lt: endTime } },
+          { trainReminder: { $gte: startTime, $lt: endTime } },
+        ],
       })
       .toArray();
-    console.log("🚀 ~ returnperformDb ~ result:", result);
     return result;
   });
 }

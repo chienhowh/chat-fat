@@ -10,7 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { MongoClient, ServerApiVersion } from "mongodb";
 import dotenv from "dotenv";
 import { throwCustomError } from "./utilites/err.js";
-import { convertTime } from "./handler.js";
 dotenv.config();
 const uri = `mongodb+srv://chienhowh:${process.env.MONGODB_ATLAS}@cluster0.onb0g.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -65,19 +64,17 @@ export function getUserProfile(userId) {
         }));
     });
 }
-export function getPendingReminders(curTime, reminderType) {
+export function getPendingReminders(startTime, endTime) {
     return __awaiter(this, void 0, void 0, function* () {
-        const nowReminderTime = convertTime(curTime);
-        const laterReminderTime = convertTime(new Date(curTime.getTime() + 5 * 60 * 1000));
-        console.log("🚀 ~ nowReminderTime:", nowReminderTime);
-        console.log("🚀 ~ laterReminderTime:", laterReminderTime);
         return performDb("users", (collection) => __awaiter(this, void 0, void 0, function* () {
             const result = yield collection
                 .find({
-                weighReminder: { $gte: nowReminderTime, $lt: laterReminderTime },
+                $or: [
+                    { weighReminder: { $gte: startTime, $lt: endTime } },
+                    { trainReminder: { $gte: startTime, $lt: endTime } },
+                ],
             })
                 .toArray();
-            console.log("🚀 ~ returnperformDb ~ result:", result);
             return result;
         }));
     });

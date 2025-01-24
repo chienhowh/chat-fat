@@ -206,3 +206,15 @@ export async function sendNotification(role: UserRole) {
     text: `${role.userName ?? ""}該量體重囉`,
   });
 }
+export async function sendTrainNotification(role: UserRole) {
+  return client.pushMessage(role.userId, [
+    {
+      type: "text",
+      text: `${role.userName ?? ""}今天運動了嗎?`,
+    },
+    {
+      type: "text",
+      text: "別讓啞鈴等得太久，它可是比你曖昧對象更需要你的陪伴！",
+    },
+  ]);
+}

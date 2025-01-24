@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { middleware } from "@line/bot-sdk";
 import express from "express";
 import dotenv from "dotenv";
-import { handleRoleSelection, handleRoleConfirmation, handleAddWeight, handleNewFollowers, handleSendReminder, sendNotification, } from "./handler.js";
+import { handleRoleSelection, handleRoleConfirmation, handleAddWeight, handleNewFollowers, handleSendReminder, sendNotification, convertTime, sendTrainNotification, } from "./handler.js";
 import schedule from "node-schedule";
 import { getPendingReminders } from "./db.js";
 dotenv.config();
@@ -75,15 +75,27 @@ schedule.scheduleJob("*/5 * * * *", () => __awaiter(void 0, void 0, void 0, func
     console.log(`檢查提醒時間範圍: ${new Date().toISOString()}`);
     try {
         const now = new Date();
-        const reminders = yield getPendingReminders(now, "weighReminder");
-        console.log("🚀 ~ schedule.scheduleJob ~ reminders:", reminders);
+        const startTime = convertTime(now);
+        const endTime = convertTime(new Date(now.getTime() + 5 * 60 * 1000));
+        const reminders = yield getPendingReminders(startTime, endTime);
         if (reminders.length === 0) {
             console.log("沒有需要提醒的任務");
             return;
         }
-        for (const reminder of reminders) {
+        // 根據提醒類型分類用戶
+        const weighUsers = reminders.filter((user) => user.weighReminder &&
+            user.weighReminder >= startTime &&
+            user.weighReminder < endTime);
+        const trainUsers = reminders.filter((user) => user.trainReminder &&
+            user.trainReminder >= startTime &&
+            user.trainReminder < endTime);
+        for (const reminder of weighUsers) {
             console.log(`提醒用戶 ${reminder.userId}, ${reminder.userName}`);
             yield sendNotification(reminder);
+        }
+        for (const reminder of trainUsers) {
+            console.log(`提醒用戶 ${reminder.userId}, ${reminder.userName}`);
+            yield sendTrainNotification(reminder);
         }
     }
     catch (err) {
