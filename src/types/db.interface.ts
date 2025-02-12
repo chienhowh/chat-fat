@@ -20,6 +20,6 @@ export interface UserRole {
   ptRole: string;
   userName?: string;
   weighReminder: string;
-  trainReminder: string; // ex. 08:00, 22:30
+  trainReminder: string; // ex. 0800, 2230
   userTimeZone: string; // ex. +08:00
 }

@@ -1,13 +1,7 @@
 import { Collection, Document, MongoClient, ServerApiVersion } from "mongodb";
 import dotenv from "dotenv";
-import {
-  PtRole,
-  Reminder,
-  UserRole,
-  WeightRecord,
-} from "./types/db.interface.js";
+import { UserRole, WeightRecord } from "./types/db.interface.js";
 import { throwCustomError } from "./utilites/err.js";
-import { convertTime } from "./handler.js";
 
 dotenv.config();
 
@@ -29,17 +23,6 @@ export async function addUser(userId: string) {
       trainReminder: "2000",
     });
     return result.insertedId;
-  });
-}
-
-export async function addWeighTimeReminder(userId: string, reminder: Reminder) {
-  return performDb("weigh_time_reminder", async (collection) => {
-    const result = await collection.updateOne(
-      { userId },
-      { $set: reminder },
-      { upsert: true }
-    );
-    return result.upsertedId || null;
   });
 }
 
@@ -82,6 +65,19 @@ export async function getPendingReminders(
       })
       .toArray();
     return result;
+  });
+}
+export async function addReminder(
+  userId: string,
+  reminder: any
+): Promise<UserRole[]> {
+  return performDb("users", async (collection) => {
+    const result = await collection.updateOne(
+      { userId },
+      { $set: reminder },
+      { upsert: true }
+    );
+    return result.upsertedId || null;
   });
 }
 

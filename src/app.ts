@@ -6,10 +6,11 @@ import {
   handleRoleConfirmation,
   handleAddWeight,
   handleNewFollowers,
-  handleSendReminder,
   sendNotification,
   convertTime,
   sendTrainNotification,
+  handleTutorial,
+  handleAddReminder,
 } from "./handler.js";
 import { LINEWebhookEvent } from "./types/global.js";
 import schedule from "node-schedule";
@@ -52,6 +53,10 @@ async function handleEvent(event: LINEWebhookEvent) {
 
   const userMessage = event.message.text;
 
+  if (userMessage === "看教學") {
+    return handleTutorial(event);
+  }
+
   if (userMessage === "選教練") {
     return handleRoleSelection(event);
   }
@@ -72,9 +77,12 @@ async function handleEvent(event: LINEWebhookEvent) {
   }
 
   // TODO:
-  if (userMessage === "提醒運動") {
+  const reminderMatch = userMessage.match(/[:\s]*提醒\s*(運動|測量)\s*(\d{4})/);
+  if (reminderMatch) {
     const { userId } = event.source;
-    return handleSendReminder(userId!, "記得運動");
+    const type =
+      reminderMatch[1] === "運動" ? "trainReminder" : "weighReminder";
+    return handleAddReminder(userId!, type, reminderMatch[2]);
   }
 
   return Promise.resolve();
@@ -128,7 +136,7 @@ schedule.scheduleJob("*/5 * * * *", async () => {
     await Promise.all(
       trainUsers.map((reminder) =>
         limit(() =>
-          sendNotification(reminder).catch((error) => {
+          sendTrainNotification(reminder).catch((error) => {
             console.error(`發送訓練通知給 ${reminder.userName} 失敗:`, error);
             return null;
           })

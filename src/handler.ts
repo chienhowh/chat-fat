@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import {
   addWeightRecord,
   addRole,
-  addWeighTimeReminder,
+  addReminder,
   addUser,
   getUserProfile,
 } from "./db.js";
@@ -108,13 +108,14 @@ export async function handleAddWeight(event: LINEMessageEvent, weight: number) {
   }
 }
 
-export async function handleSendReminder(userId: string, message: string) {
+export async function handleAddReminder(
+  userId: string,
+  reminder: "weighReminder" | "trainReminder",
+  time: string
+) {
   console.log("🚀 ~ handleSendReminder ~ userId:", userId);
   try {
-    return client.pushMessage(userId, {
-      type: "text",
-      text: message,
-    });
+    await addReminder(userId, { [reminder]: time });
   } catch (err) {
     throwCustomError(`發送提醒失敗`, err);
   }
@@ -123,13 +124,7 @@ export async function handleSendReminder(userId: string, message: string) {
 export async function handleNewFollowers(event: LINEMessageEvent) {
   try {
     const userId = event.source.userId!;
-    await Promise.all([
-      addUser(userId),
-      addWeighTimeReminder(userId, {
-        userId: userId!,
-        reminderTime: "0800",
-      }),
-    ]);
+    await Promise.all([addUser(userId)]);
     return client.pushMessage(userId, {
       type: "text",
       text: "歡迎加入！",
@@ -203,14 +198,16 @@ export function convertTime(time: Date) {
 export async function sendNotification(role: UserRole) {
   return client.pushMessage(role.userId, {
     type: "text",
-    text: `${role.userName ?? ""}該量體重囉`,
+    text: `${
+      role.userName ?? "寶貝"
+    }，該量體重了，不然怎麼知道自己有沒有更性感？`,
   });
 }
 export async function sendTrainNotification(role: UserRole) {
   return client.pushMessage(role.userId, [
     {
       type: "text",
-      text: `${role.userName ?? ""}今天運動了嗎?`,
+      text: `${role.userName ?? "寶貝"}今天運動了嗎?`,
     },
     {
       type: "text",
@@ -218,3 +215,19 @@ export async function sendTrainNotification(role: UserRole) {
     },
   ]);
 }
+
+export async function handleTutorial(event: LINEMessageEvent) {
+  return client.replyMessage(event.replyToken, {
+    type: "text",
+    text: `體重記錄："體重99" | 選教練："選教練"
+          運動提醒："提醒訓練0900" | 測量提醒："提醒測量0900"
+    `,
+  });
+}
+
+// TODO: 放到首次
+// 📌 **使用說明**
+// ⚡ **記錄體重**：輸入 `體重 99`
+// ⚡ **選擇教練**：輸入 `選教練`
+// ⚡ **提醒運動**：輸入 `提醒訓練 0900`（早上9:00 提醒）
+// ⚡ **提醒測量**：輸入 `提醒測量 0900`（早上9:00 提醒）
