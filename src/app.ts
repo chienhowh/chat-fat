@@ -14,8 +14,10 @@ import {
 import { LINEWebhookEvent } from "./types/global.js";
 import schedule from "node-schedule";
 import { getPendingReminders } from "./db.js";
-dotenv.config();
+import pLimit from "p-limit";
 
+dotenv.config();
+const limit = pLimit(5);
 // create LINE SDK config from env variables
 const config = {
   channelSecret: process.env.CHANNEL_SECRET || "",
@@ -111,15 +113,28 @@ schedule.scheduleJob("*/5 * * * *", async () => {
         user.trainReminder >= startTime &&
         user.trainReminder < endTime
     );
-    for (const reminder of weighUsers) {
-      console.log(`提醒用戶 ${reminder.userId}, ${reminder.userName}`);
-      await sendNotification(reminder);
-    }
 
-    for (const reminder of trainUsers) {
-      console.log(`提醒用戶 ${reminder.userId}, ${reminder.userName}`);
-      await sendTrainNotification(reminder);
-    }
+    await Promise.all(
+      weighUsers.map((reminder) =>
+        limit(() =>
+          sendNotification(reminder).catch((error) => {
+            console.error(`發送測量通知給 ${reminder.userName} 失敗:`, error);
+            return null;
+          })
+        )
+      )
+    );
+
+    await Promise.all(
+      trainUsers.map((reminder) =>
+        limit(() =>
+          sendNotification(reminder).catch((error) => {
+            console.error(`發送訓練通知給 ${reminder.userName} 失敗:`, error);
+            return null;
+          })
+        )
+      )
+    );
   } catch (err) {
     console.error("處理提醒時出錯:", err);
   }
