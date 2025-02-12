@@ -10,10 +10,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { middleware } from "@line/bot-sdk";
 import express from "express";
 import dotenv from "dotenv";
-import { handleRoleSelection, handleRoleConfirmation, handleAddWeight, handleNewFollowers, handleSendReminder, sendNotification, convertTime, sendTrainNotification, } from "./handler.js";
+import { handleRoleSelection, handleRoleConfirmation, handleAddWeight, handleNewFollowers, sendNotification, convertTime, sendTrainNotification, handleTutorial, handleAddReminder, } from "./handler.js";
 import schedule from "node-schedule";
 import { getPendingReminders } from "./db.js";
+import pLimit from "p-limit";
 dotenv.config();
+const limit = pLimit(5);
 // create LINE SDK config from env variables
 const config = {
     channelSecret: process.env.CHANNEL_SECRET || "",
@@ -43,6 +45,9 @@ function handleEvent(event) {
             return Promise.resolve(null);
         }
         const userMessage = event.message.text;
+        if (userMessage === "看教學") {
+            return handleTutorial(event);
+        }
         if (userMessage === "選教練") {
             return handleRoleSelection(event);
         }
@@ -59,9 +64,11 @@ function handleEvent(event) {
             return handleNewFollowers(event);
         }
         // TODO:
-        if (userMessage === "提醒運動") {
+        const reminderMatch = userMessage.match(/[:\s]*提醒\s*(運動|測量)\s*(\d{4})/);
+        if (reminderMatch) {
             const { userId } = event.source;
-            return handleSendReminder(userId, "記得運動");
+            const type = reminderMatch[1] === "運動" ? "trainReminder" : "weighReminder";
+            return handleAddReminder(userId, type, reminderMatch[2]);
         }
         return Promise.resolve();
     });
@@ -89,14 +96,14 @@ schedule.scheduleJob("*/5 * * * *", () => __awaiter(void 0, void 0, void 0, func
         const trainUsers = reminders.filter((user) => user.trainReminder &&
             user.trainReminder >= startTime &&
             user.trainReminder < endTime);
-        for (const reminder of weighUsers) {
-            console.log(`提醒用戶 ${reminder.userId}, ${reminder.userName}`);
-            yield sendNotification(reminder);
-        }
-        for (const reminder of trainUsers) {
-            console.log(`提醒用戶 ${reminder.userId}, ${reminder.userName}`);
-            yield sendTrainNotification(reminder);
-        }
+        yield Promise.all(weighUsers.map((reminder) => limit(() => sendNotification(reminder).catch((error) => {
+            console.error(`發送測量通知給 ${reminder.userName} 失敗:`, error);
+            return null;
+        }))));
+        yield Promise.all(trainUsers.map((reminder) => limit(() => sendTrainNotification(reminder).catch((error) => {
+            console.error(`發送訓練通知給 ${reminder.userName} 失敗:`, error);
+            return null;
+        }))));
     }
     catch (err) {
         console.error("處理提醒時出錯:", err);

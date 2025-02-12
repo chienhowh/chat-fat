@@ -32,14 +32,6 @@ export function addUser(userId) {
         }));
     });
 }
-export function addWeighTimeReminder(userId, reminder) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return performDb("weigh_time_reminder", (collection) => __awaiter(this, void 0, void 0, function* () {
-            const result = yield collection.updateOne({ userId }, { $set: reminder }, { upsert: true });
-            return result.upsertedId || null;
-        }));
-    });
-}
 export function addWeightRecord(weightRecord) {
     return __awaiter(this, void 0, void 0, function* () {
         return performDb("weight_records", (collection) => __awaiter(this, void 0, void 0, function* () {
@@ -76,6 +68,14 @@ export function getPendingReminders(startTime, endTime) {
             })
                 .toArray();
             return result;
+        }));
+    });
+}
+export function addReminder(userId, reminder) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return performDb("users", (collection) => __awaiter(this, void 0, void 0, function* () {
+            const result = yield collection.updateOne({ userId }, { $set: reminder }, { upsert: true });
+            return result.upsertedId || null;
         }));
     });
 }

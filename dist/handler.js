@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { Client } from "@line/bot-sdk";
 import dotenv from "dotenv";
-import { addWeightRecord, addRole, addWeighTimeReminder, addUser, getUserProfile, } from "./db.js";
+import { addWeightRecord, addRole, addReminder, addUser, getUserProfile, } from "./db.js";
 import { throwCustomError } from "./utilites/err.js";
 dotenv.config();
 // create LINE SDK client
@@ -100,14 +100,11 @@ export function handleAddWeight(event, weight) {
         }
     });
 }
-export function handleSendReminder(userId, message) {
+export function handleAddReminder(userId, reminder, time) {
     return __awaiter(this, void 0, void 0, function* () {
         console.log("🚀 ~ handleSendReminder ~ userId:", userId);
         try {
-            return client.pushMessage(userId, {
-                type: "text",
-                text: message,
-            });
+            yield addReminder(userId, { [reminder]: time });
         }
         catch (err) {
             throwCustomError(`發送提醒失敗`, err);
@@ -118,13 +115,7 @@ export function handleNewFollowers(event) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const userId = event.source.userId;
-            yield Promise.all([
-                addUser(userId),
-                addWeighTimeReminder(userId, {
-                    userId: userId,
-                    reminderTime: "0800",
-                }),
-            ]);
+            yield Promise.all([addUser(userId)]);
             return client.pushMessage(userId, {
                 type: "text",
                 text: "歡迎加入！",
@@ -203,7 +194,7 @@ export function sendNotification(role) {
         var _a;
         return client.pushMessage(role.userId, {
             type: "text",
-            text: `${(_a = role.userName) !== null && _a !== void 0 ? _a : ""}該量體重囉`,
+            text: `${(_a = role.userName) !== null && _a !== void 0 ? _a : "寶貝"}，該量體重了，不然怎麼知道自己有沒有更性感？`,
         });
     });
 }
@@ -213,7 +204,7 @@ export function sendTrainNotification(role) {
         return client.pushMessage(role.userId, [
             {
                 type: "text",
-                text: `${(_a = role.userName) !== null && _a !== void 0 ? _a : ""}今天運動了嗎?`,
+                text: `${(_a = role.userName) !== null && _a !== void 0 ? _a : "寶貝"}今天運動了嗎?`,
             },
             {
                 type: "text",
@@ -222,3 +213,19 @@ export function sendTrainNotification(role) {
         ]);
     });
 }
+export function handleTutorial(event) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return client.replyMessage(event.replyToken, {
+            type: "text",
+            text: `體重記錄："體重99" | 選教練："選教練"
+          運動提醒："提醒訓練0900" | 測量提醒："提醒測量0900"
+    `,
+        });
+    });
+}
+// TODO: 放到首次
+// 📌 **使用說明**
+// ⚡ **記錄體重**：輸入 `體重 99`
+// ⚡ **選擇教練**：輸入 `選教練`
+// ⚡ **提醒運動**：輸入 `提醒訓練 0900`（早上9:00 提醒）
+// ⚡ **提醒測量**：輸入 `提醒測量 0900`（早上9:00 提醒）
