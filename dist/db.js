@@ -20,15 +20,11 @@ const client = new MongoClient(uri, {
         deprecationErrors: true,
     },
 });
-export function addUser(userId) {
+export function addUser(userId, data) {
     return __awaiter(this, void 0, void 0, function* () {
         return performDb("users", (collection) => __awaiter(this, void 0, void 0, function* () {
-            const result = yield collection.insertOne({
-                userId,
-                weighReminder: "0900",
-                trainReminder: "2000",
-            });
-            return result.insertedId;
+            const result = yield collection.updateOne({ userId }, { $set: data }, { upsert: true });
+            return result.upsertedId || null;
         }));
     });
 }

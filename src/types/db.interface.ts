@@ -23,3 +23,9 @@ export interface UserRole {
   trainReminder: string; // ex. 0800, 2230
   userTimeZone: string; // ex. +08:00
 }
+
+export type CoachReplyType = "train" | "messureWeight" | "weight";
+
+export interface CoachReply {
+  [propertyName: string]: Record<CoachReplyType, string[]>;
+}

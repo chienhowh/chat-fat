@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { middleware } from "@line/bot-sdk";
 import express from "express";
 import dotenv from "dotenv";
-import { handleRoleSelection, handleRoleConfirmation, handleAddWeight, handleNewFollowers, sendNotification, convertTime, sendTrainNotification, handleTutorial, handleAddReminder, } from "./handler.js";
+import { handleRoleSelection, handleRoleConfirmation, handleAddWeight, handleNewFollowers, sendNotification, convertTime, sendTrainNotification, handleAddReminder, } from "./handler.js";
 import schedule from "node-schedule";
 import { getPendingReminders } from "./db.js";
 import pLimit from "p-limit";
@@ -40,14 +40,14 @@ app.post("/lineWebhook", middleware(config), (req, res) => {
 });
 function handleEvent(event) {
     return __awaiter(this, void 0, void 0, function* () {
+        if (event.type === "join") {
+            return handleNewFollowers(event);
+        }
         if (event.type !== "message" || event.message.type !== "text") {
             // ignore non-text-message event
             return Promise.resolve(null);
         }
         const userMessage = event.message.text;
-        if (userMessage === "看教學") {
-            return handleTutorial(event);
-        }
         if (userMessage === "選教練") {
             return handleRoleSelection(event);
         }
@@ -59,11 +59,6 @@ function handleEvent(event) {
         if (weightMatch) {
             return handleAddWeight(event, parseFloat(weightMatch[1]));
         }
-        // TODO: 收到加好友訊息
-        if (userMessage === "add") {
-            return handleNewFollowers(event);
-        }
-        // TODO:
         const reminderMatch = userMessage.match(/[:\s]*提醒\s*(運動|測量)\s*(\d{4})/);
         if (reminderMatch) {
             const { userId } = event.source;

@@ -15,14 +15,14 @@ const client = new MongoClient(uri, {
   },
 });
 
-export async function addUser(userId: string) {
+export async function addUser(userId: string, data: any) {
   return performDb("users", async (collection) => {
-    const result = await collection.insertOne({
-      userId,
-      weighReminder: "0900",
-      trainReminder: "2000",
-    });
-    return result.insertedId;
+    const result = await collection.updateOne(
+      { userId },
+      { $set: data },
+      { upsert: true }
+    );
+    return result.upsertedId || null;
   });
 }
 
@@ -67,6 +67,7 @@ export async function getPendingReminders(
     return result;
   });
 }
+
 export async function addReminder(
   userId: string,
   reminder: any
