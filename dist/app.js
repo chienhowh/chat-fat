@@ -40,7 +40,7 @@ app.post("/lineWebhook", middleware(config), (req, res) => {
 });
 function handleEvent(event) {
     return __awaiter(this, void 0, void 0, function* () {
-        if (event.type === "join") {
+        if (event.type === "follow") {
             return handleNewFollowers(event);
         }
         if (event.type !== "message" || event.message.type !== "text") {

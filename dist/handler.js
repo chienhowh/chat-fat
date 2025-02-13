@@ -68,7 +68,6 @@ export function handleAddWeight(event, weight) {
             let displayName = "您";
             const { userId } = event.source;
             const profile = yield getLineUserProfile(event.source);
-            console.log(" handleEvent ~ profile:", profile);
             displayName = profile.displayName;
             yield addWeightRecord({
                 userId: userId,
@@ -84,7 +83,7 @@ export function handleAddWeight(event, weight) {
                 },
                 {
                     type: "text",
-                    text: role.ptRole
+                    text: (role === null || role === void 0 ? void 0 : role.ptRole)
                         ? coachReply(role.ptRole, "weight")
                         : "您尚未選擇教練，可輸入'選教練'挑選您的專屬教練!",
                 },

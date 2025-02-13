@@ -9,7 +9,7 @@ import {
 } from "./db.js";
 import {
   LINEEventSource,
-  LINEJoinEvent,
+  LINEFollowEvent,
   LINEMessage,
   LINEMessageEvent,
 } from "./types/global.js";
@@ -75,7 +75,6 @@ export async function handleAddWeight(event: LINEMessageEvent, weight: number) {
     let displayName = "您";
     const { userId } = event.source;
     const profile = await getLineUserProfile(event.source);
-    console.log(" handleEvent ~ profile:", profile);
     displayName = profile.displayName;
 
     await addWeightRecord({
@@ -93,7 +92,7 @@ export async function handleAddWeight(event: LINEMessageEvent, weight: number) {
       },
       {
         type: "text",
-        text: role.ptRole
+        text: role?.ptRole
           ? coachReply(role.ptRole, "weight")
           : "您尚未選擇教練，可輸入'選教練'挑選您的專屬教練!",
       },
@@ -122,7 +121,7 @@ export async function handleAddReminder(
   }
 }
 
-export async function handleNewFollowers(event: LINEJoinEvent) {
+export async function handleNewFollowers(event: LINEFollowEvent) {
   try {
     const userId = event.source.userId!;
     const profile = await getLineUserProfile(event.source);

@@ -45,7 +45,7 @@ app.post("/lineWebhook", middleware(config), (req, res) => {
 });
 
 async function handleEvent(event: LINEWebhookEvent) {
-  if (event.type === "join") {
+  if (event.type === "follow") {
     return handleNewFollowers(event);
   }
 
